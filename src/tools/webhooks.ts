@@ -1,6 +1,7 @@
 import type { Client, TextChannel } from "discord.js";
 import type { FastMCP } from "fastmcp";
 import { z } from "zod/v4";
+import { embedsParam } from "../schemas.ts";
 import { withDiscordErrorHandling } from "../utils.ts";
 
 export function registerWebhookTools(
@@ -77,13 +78,25 @@ export function registerWebhookTools(
 
 	server.addTool({
 		name: "send_webhook_message",
-		description: "Send a message through a Discord webhook. Supports custom username and avatar.",
-		parameters: z.object({
-			webhookUrl: z.string().url().describe("Full webhook URL."),
-			message: z.string().describe("Message content to send (max 2000 characters)."),
-			username: z.string().optional().describe("Override display name for this message."),
-			avatarUrl: z.string().url().optional().describe("Override avatar URL for this message."),
-		}),
+		description:
+			"Send a message through a Discord webhook. Supports custom username, avatar, and embeds. " +
+			"At least one of `message` or `embeds` must be provided.",
+		parameters: z
+			.object({
+				webhookUrl: z.string().url().describe("Full webhook URL."),
+				message: z
+					.string()
+					.optional()
+					.describe(
+						"Message content to send (max 2000 characters). Optional if embeds are provided.",
+					),
+				username: z.string().optional().describe("Override display name for this message."),
+				avatarUrl: z.string().url().optional().describe("Override avatar URL for this message."),
+				embeds: embedsParam,
+			})
+			.refine((data) => data.message || (data.embeds && data.embeds.length > 0), {
+				message: "At least one of `message` or `embeds` must be provided.",
+			}),
 		execute: async (args) => {
 			return withDiscordErrorHandling(async () => {
 				// Parse webhook URL to extract ID and token
@@ -96,9 +109,10 @@ export function registerWebhookTools(
 				const webhook = await client.fetchWebhook(webhookId, webhookToken);
 
 				await webhook.send({
-					content: args.message,
+					content: args.message || undefined,
 					username: args.username,
 					avatarURL: args.avatarUrl,
+					embeds: args.embeds,
 				});
 
 				return `✅ Message sent via webhook "${webhook.name}"`;

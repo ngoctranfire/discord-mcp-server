@@ -87,6 +87,39 @@ describe("thread tools", () => {
 			expect(result).toContain(THREAD_ACTIVE.name);
 			expect(sendSpy).toHaveBeenCalledTimes(1);
 		});
+
+		it("sends embeds-only reply in a thread", async () => {
+			const result = await callTool("reply_to_thread", {
+				threadId: THREAD_ACTIVE.id,
+				embeds: [{ image: { url: "https://example.com/photo.jpg" } }],
+			});
+			expect(result).toContain("✅");
+			expect(result).toContain("Reply sent");
+			expect(result).toContain(THREAD_ACTIVE.name);
+		});
+
+		it("sends reply with both text and embeds in a thread", async () => {
+			const result = await callTool("reply_to_thread", {
+				threadId: THREAD_ACTIVE.id,
+				message: "Here's the image:",
+				embeds: [{ title: "Photo", image: { url: "https://example.com/photo.jpg" } }],
+			});
+			expect(result).toContain("✅");
+			expect(result).toContain("Reply sent");
+		});
+
+		it("rejects when neither message nor embeds are provided", async () => {
+			await expect(callTool("reply_to_thread", { threadId: THREAD_ACTIVE.id })).rejects.toThrow();
+		});
+
+		it("rejects thread reply embed with malformed image URL", async () => {
+			await expect(
+				callTool("reply_to_thread", {
+					threadId: THREAD_ACTIVE.id,
+					embeds: [{ image: { url: "not-a-url" } }],
+				}),
+			).rejects.toThrow();
+		});
 	});
 
 	describe("get_thread", () => {

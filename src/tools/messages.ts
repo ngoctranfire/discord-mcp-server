@@ -1,6 +1,7 @@
 import type { Client, TextChannel } from "discord.js";
 import type { FastMCP } from "fastmcp";
 import { z } from "zod/v4";
+import { embedsParam } from "../schemas.ts";
 import { formatMessage, withDiscordErrorHandling } from "../utils.ts";
 
 export function registerMessageTools(
@@ -11,11 +12,21 @@ export function registerMessageTools(
 	server.addTool({
 		name: "send_message",
 		description:
-			"Send a message to a Discord channel. Supports plain text. Returns the sent message ID.",
-		parameters: z.object({
-			channelId: z.string().describe("ID of the channel to send the message to."),
-			message: z.string().describe("The message content to send (max 2000 characters)."),
-		}),
+			"Send a message to a Discord channel. Supports plain text and embeds (images, titles, " +
+			"descriptions, fields). At least one of `message` or `embeds` must be provided. " +
+			"Returns the sent message ID.",
+		parameters: z
+			.object({
+				channelId: z.string().describe("ID of the channel to send the message to."),
+				message: z
+					.string()
+					.optional()
+					.describe("Text content to send (max 2000 characters). Optional if embeds are provided."),
+				embeds: embedsParam,
+			})
+			.refine((data) => data.message || (data.embeds && data.embeds.length > 0), {
+				message: "At least one of `message` or `embeds` must be provided.",
+			}),
 		execute: async (args) => {
 			return withDiscordErrorHandling(async () => {
 				const channel = await client.channels.fetch(args.channelId);
@@ -23,7 +34,10 @@ export function registerMessageTools(
 					return `Channel ${args.channelId} is not a text channel or cannot receive messages.`;
 				}
 
-				const sent = await (channel as TextChannel).send(args.message);
+				const sent = await (channel as TextChannel).send({
+					content: args.message || undefined,
+					embeds: args.embeds,
+				});
 				return `✅ Message sent (ID: ${sent.id}) in #${(channel as TextChannel).name}`;
 			});
 		},

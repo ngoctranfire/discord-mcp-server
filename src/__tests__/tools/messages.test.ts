@@ -31,6 +31,69 @@ describe("message tools", () => {
 			expect(result).toContain("ID:");
 			expect(result).toContain(`#${CHANNEL_GENERAL.name}`);
 		});
+
+		it("sends embeds-only message with image URL", async () => {
+			const result = await callTool("send_message", {
+				channelId: CHANNEL_GENERAL.id,
+				embeds: [{ image: { url: "https://example.com/photo.jpg" } }],
+			});
+			expect(result).toContain("✅");
+			expect(result).toContain("Message sent");
+			expect(result).toContain(`#${CHANNEL_GENERAL.name}`);
+		});
+
+		it("sends message with both text and multiple image embeds", async () => {
+			const result = await callTool("send_message", {
+				channelId: CHANNEL_GENERAL.id,
+				message: "Check these out:",
+				embeds: [
+					{ title: "Photo 1", image: { url: "https://example.com/1.jpg" } },
+					{ title: "Photo 2", image: { url: "https://example.com/2.jpg" } },
+				],
+			});
+			expect(result).toContain("✅");
+			expect(result).toContain("Message sent");
+		});
+
+		it("sends embed with all optional fields", async () => {
+			const result = await callTool("send_message", {
+				channelId: CHANNEL_GENERAL.id,
+				embeds: [
+					{
+						title: "My Title",
+						description: "Some description",
+						url: "https://example.com",
+						color: 16734003,
+						image: { url: "https://example.com/img.jpg" },
+						thumbnail: { url: "https://example.com/thumb.jpg" },
+						fields: [{ name: "Field 1", value: "Value 1", inline: true }],
+					},
+				],
+			});
+			expect(result).toContain("✅");
+		});
+
+		it("rejects when neither message nor embeds are provided", async () => {
+			await expect(callTool("send_message", { channelId: CHANNEL_GENERAL.id })).rejects.toThrow();
+		});
+
+		it("rejects embed with malformed image URL", async () => {
+			await expect(
+				callTool("send_message", {
+					channelId: CHANNEL_GENERAL.id,
+					embeds: [{ image: { url: "not-a-url" } }],
+				}),
+			).rejects.toThrow();
+		});
+
+		it("rejects embed with empty image URL", async () => {
+			await expect(
+				callTool("send_message", {
+					channelId: CHANNEL_GENERAL.id,
+					embeds: [{ image: { url: "" } }],
+				}),
+			).rejects.toThrow();
+		});
 	});
 
 	describe("read_messages", () => {

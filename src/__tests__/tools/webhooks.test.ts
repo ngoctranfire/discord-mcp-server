@@ -75,6 +75,42 @@ describe("webhook tools", () => {
 			expect(result).toContain("Message sent via webhook");
 		});
 
+		it("sends embeds-only message via webhook", async () => {
+			const result = await callTool("send_webhook_message", {
+				webhookUrl: WEBHOOK_GITHUB.url,
+				embeds: [{ image: { url: "https://example.com/photo.jpg" } }],
+			});
+			expect(result).toContain("✅");
+			expect(result).toContain("Message sent via webhook");
+		});
+
+		it("sends message with both text and embeds via webhook", async () => {
+			const result = await callTool("send_webhook_message", {
+				webhookUrl: WEBHOOK_GITHUB.url,
+				message: "Here are some images:",
+				embeds: [
+					{ title: "Image 1", image: { url: "https://example.com/1.jpg" } },
+					{ title: "Image 2", image: { url: "https://example.com/2.jpg" } },
+				],
+			});
+			expect(result).toContain("✅");
+		});
+
+		it("rejects when neither message nor embeds are provided", async () => {
+			await expect(
+				callTool("send_webhook_message", { webhookUrl: WEBHOOK_GITHUB.url }),
+			).rejects.toThrow();
+		});
+
+		it("rejects webhook embed with malformed image URL", async () => {
+			await expect(
+				callTool("send_webhook_message", {
+					webhookUrl: WEBHOOK_GITHUB.url,
+					embeds: [{ image: { url: "not-a-url" } }],
+				}),
+			).rejects.toThrow();
+		});
+
 		it("rejects invalid webhook URL format", async () => {
 			const result = await callTool("send_webhook_message", {
 				webhookUrl: "https://example.com/not-a-webhook",

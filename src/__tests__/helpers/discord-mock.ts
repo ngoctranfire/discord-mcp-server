@@ -116,9 +116,9 @@ function createMockChannel(fixture: (typeof ALL_CHANNELS)[number]): any {
 		// Text channel features
 		...(isText
 			? {
-					send: async (content: string) => ({
+					send: async (content: string | { content?: string; embeds?: unknown[] }) => ({
 						id: `new-msg-${Date.now()}`,
-						content,
+						content: typeof content === "string" ? content : (content.content ?? ""),
 					}),
 					messages: {
 						fetch: async (opts?: { limit?: number } | string) => {
@@ -238,9 +238,9 @@ function createMockThread(fixture: typeof THREAD_ACTIVE | typeof THREAD_ARCHIVED
 		isThread: () => true,
 		isTextBased: () => true,
 
-		send: async (content: string) => ({
+		send: async (content: string | { content?: string; embeds?: unknown[] }) => ({
 			id: `new-thread-msg-${Date.now()}`,
-			content,
+			content: typeof content === "string" ? content : (content.content ?? ""),
 		}),
 		messages: {
 			fetch: async () => threadMessages,
@@ -259,7 +259,10 @@ function createMockWebhook(fixture: typeof WEBHOOK_GITHUB | typeof WEBHOOK_MONIT
 		owner: fixture.owner,
 		channelId: fixture.channelId,
 		delete: async () => {},
-		send: async () => ({}),
+		send: async (content?: string | { content?: string; embeds?: unknown[] }) => ({
+			id: `new-webhook-msg-${Date.now()}`,
+			content: typeof content === "string" ? content : (content?.content ?? ""),
+		}),
 		edit: async () => ({}),
 	};
 }
@@ -375,7 +378,10 @@ export function createMockDiscordClient(): any {
 			return {
 				id,
 				name: "Dynamic Webhook",
-				send: async () => ({}),
+				send: async (content?: string | { content?: string; embeds?: unknown[] }) => ({
+					id: `new-webhook-msg-${Date.now()}`,
+					content: typeof content === "string" ? content : (content?.content ?? ""),
+				}),
 				edit: async () => ({}),
 				delete: async () => {},
 			};

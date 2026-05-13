@@ -14,7 +14,7 @@
 
 ## What is this?
 
-**discord-mcp-server** lets any MCP-compatible AI client (Claude Desktop, Cursor, Windsurf, etc.) interact with Discord — send messages, manage channels, create webhooks, assign roles, and more.
+**discord-mcp-server** lets any MCP-compatible AI client (Claude Desktop, Cursor, Windsurf, etc.) interact with Discord — send messages with rich embeds, manage channels, create webhooks, assign roles, and more.
 
 > Built with [Bun](https://bun.sh), [FastMCP](https://github.com/punkpeye/fastmcp), and [discord.js](https://discord.js.org).
 
@@ -30,6 +30,8 @@
 | 🧵 **Threads**     | `list_threads`, `create_thread`, `reply_to_thread`, `get_thread`                                                                                       |
 
 **31 tools** covering the most common Discord operations. Forum posts are supported via `create_thread`.
+
+> ✦ `send_message`, `send_webhook_message`, and `reply_to_thread` support **rich embeds** — include images, titles, descriptions, clickable URLs, colour, and up to 25 field pairs per embed. `message` is optional when embeds are provided.
 
 ## Prerequisites
 
@@ -173,6 +175,7 @@ src/
 ├── index.ts          # Entry point — FastMCP server setup
 ├── config.ts         # CLI args + env var merging
 ├── discord.ts        # Discord.js client factory
+├── schemas.ts        # Shared Zod schemas (EmbedSchema, embedsParam)
 ├── utils.ts          # Shared utilities (error handling, formatting)
 └── tools/
     ├── server-info.ts  # Server listing & details
